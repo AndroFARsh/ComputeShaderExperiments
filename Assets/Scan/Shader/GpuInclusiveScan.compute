@@ -1,0 +1,79 @@
+﻿#include "../../ShaderUtils/Math.compute"
+
+#pragma kernel CSInclusiveScan
+#pragma kernel CSStoreBlockSum
+#pragma kernel CSAddBlockSum
+
+#define BLOCK_AMOUNT      8
+#define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
+#define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
+
+uint3           GridDimen;
+uint            Size;
+
+Buffer<int>     In;
+RWBuffer<int>   Out;
+
+groupshared int sharedData[BLOCK_SIZE];
+
+[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
+void CSInclusiveScan( uint3 Gid  : SV_GroupID, 
+                      uint3 DTid : SV_DispatchThreadID, 
+                      uint3 GTid : SV_GroupThreadID,
+                      uint  GI   : SV_GroupIndex )
+{
+    uint tid = to1D(GTid, BLOCK_DIMEN);
+    uint gid = to1D(Gid, GridDimen);
+    uint globalId = tid + gid  * BLOCK_SIZE;
+	if (globalId < Size) {
+	    sharedData[tid] = In[globalId];
+	}
+	GroupMemoryBarrierWithGroupSync();
+	
+	for (uint s = 1; s < min(BLOCK_SIZE, Size); s <<=1) {
+	    int temp = (tid-s) >= 0 ? sharedData[tid-s] : 0;
+	    GroupMemoryBarrierWithGroupSync();
+	    
+	    sharedData[tid] += temp;
+	    GroupMemoryBarrierWithGroupSync();
+	}
+	
+	if (globalId < Size) {
+	    Out[globalId] = sharedData[tid];
+	}
+}
+
+[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
+void CSStoreBlockSum( uint3 Gid  : SV_GroupID, 
+                      uint3 DTid : SV_DispatchThreadID, 
+                      uint3 GTid : SV_GroupThreadID,
+                      uint  GI   : SV_GroupIndex )
+{
+    uint tid = to1D(GTid, BLOCK_DIMEN);
+    uint gid = to1D(Gid, GridDimen);
+    uint globalId = tid + gid  * BLOCK_SIZE;
+    
+    uint sumBlocId = globalId * BLOCK_SIZE + BLOCK_SIZE - 1;
+    if (sumBlocId < Size) {
+        Out[globalId] = In[sumBlocId];
+    }
+}
+
+[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
+void CSAddBlockSum( uint3 Gid  : SV_GroupID, 
+                    uint3 DTid : SV_DispatchThreadID, 
+                    uint3 GTid : SV_GroupThreadID,
+                    uint  GI   : SV_GroupIndex )
+{
+    uint tid = to1D(GTid, BLOCK_DIMEN);
+    uint gid = to1D(Gid, GridDimen);
+    uint globalId = tid + gid  * BLOCK_SIZE - 1;
+    
+    int sum = In[globalId];
+    for (uint i = 0; i < BLOCK_SIZE; ++i) {
+        uint index = BLOCK_SIZE + globalId * BLOCK_SIZE + i;
+        if (index < Size) {
+            Out[index] += sum;
+        }
+    }
+}

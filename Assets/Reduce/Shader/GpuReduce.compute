@@ -1,0 +1,41 @@
+﻿#include "../../ShaderUtils/Math.compute"
+
+#pragma kernel CSReduce
+
+#define BLOCK_AMOUNT      8
+#define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
+#define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
+
+uint3           GridDimen;
+uint            Size;
+
+RWBuffer<int>   Data;
+
+groupshared int sharedData[BLOCK_SIZE];
+
+[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
+void CSReduce( uint3 Gid  : SV_GroupID, 
+               uint3 DTid : SV_DispatchThreadID, 
+               uint3 GTid : SV_GroupThreadID,
+               uint  GI   : SV_GroupIndex )
+{
+    uint tid = to1D(GTid, BLOCK_DIMEN);
+    uint gid = to1D(Gid, GridDimen);
+    uint globalId = tid + gid  * BLOCK_SIZE;
+    if (globalId < Size) {
+        sharedData[tid] = Data[globalId];
+    }
+    GroupMemoryBarrierWithGroupSync();
+    
+    for (uint s = (min(BLOCK_SIZE, nextPowerOfTwo(Size)) >> 1); s > 0; s >>= 1) {
+        uint nextTid = (tid + s);
+        if (tid < s && nextTid < Size) {
+            sharedData[tid] += sharedData[nextTid];
+        }
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    if (tid == 0) {
+        Data[gid] = sharedData[tid];
+    }
+}

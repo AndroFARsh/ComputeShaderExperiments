@@ -1,0 +1,15 @@
+﻿#ifndef     __Hash__
+#define     __Hash__
+
+#define X_FACTOR    73856093
+#define Y_FACTOR    19349663
+#define Z_FACTOR    83492791
+
+int hash(float3 pos, float cellFactor)
+{
+    return asint(floor(pos.x * cellFactor) * X_FACTOR) ^ 
+           asint(floor(pos.y * cellFactor) * Y_FACTOR) ^ 
+           asint(floor(pos.z * cellFactor) * Z_FACTOR);
+}
+
+#endif
