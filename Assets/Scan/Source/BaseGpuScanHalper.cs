@@ -27,18 +27,18 @@ public abstract class BaseGpuScanHalper : MonoBehaviour
 		if (!Input.GetKeyDown(KeyCode.Return)) return;
 
 		IntArray(ref data, size, type, maxValue, constValue);
-		if (printArray) LogUtils.PrintArray(data, "In: ");
+		if (printArray) LogUtils.PrintArray(data, scanner.GetType().Name+" In: ");
             
 		var sw = Stopwatch.StartNew();
 		var scan = scanner.Scan(data);
 		sw.Stop();
 
-		LogUtils.PrintArray(scan, "Scan(" + sw.ElapsedMilliseconds + "ms):");
+		LogUtils.PrintArray(scan, scanner.GetType().Name+"(" + sw.ElapsedMilliseconds + "ms):");
 	}
 	
 	private static void IntArray(ref int[] initial, int size, FillArrayType type, int maxValue, int constValue)
 	{
 		initial = (initial == null || initial.Length != size) ? new int[size] : initial;
-		Utils.FillArray(initial, type, type == FillArrayType.Constant ? constValue : maxValue);
+		Utils.FillArray(initial, type, maxValue, constValue);
 	}
 }

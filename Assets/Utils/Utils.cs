@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 
@@ -18,20 +19,20 @@ namespace ShaderUtils
     {
         private static readonly System.Random randNum = new System.Random();
 
-        public static void FillArray(int[] array, FillArrayType type, int maxOrDefault = 10)
+        public static void FillArray(int[] array, FillArrayType type, int maxValue = 10, int defaultValue = 1)
         {
             for (var i = 0; i < array.Length; ++i)
             {
                 switch (type)
                 {
                     case FillArrayType.Constant:
-                        array[i] = maxOrDefault;
+                        array[i] = defaultValue;
                         break;
                     case FillArrayType.Random:
-                        array[i] = randNum.Next(-maxOrDefault, maxOrDefault);
+                        array[i] = randNum.Next(-maxValue, maxValue);
                         break;
                     case FillArrayType.RandomNonNegative:
-                        array[i] = randNum.Next(0, maxOrDefault);
+                        array[i] = randNum.Next(0, maxValue);
                         break;
                     case FillArrayType.Reversed:
                         array[i] = array.Length - i;
