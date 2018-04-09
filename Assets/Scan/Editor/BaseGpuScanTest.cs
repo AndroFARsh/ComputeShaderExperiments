@@ -3,7 +3,6 @@ using ShaderUtils;
 
 public abstract class BaseGpuScanTest
 {
-
 	private IScan gpuScan;
 	private IScan cpuScan;
 
@@ -59,17 +58,11 @@ public abstract class BaseGpuScanTest
 		Test(1000000, FillArrayType.Constant);
 	}
 	
-//	[Test]
-//	public void Scan_Constant_1000000000() 
-//	{
-//		Test(1000000000, FillArrayType.Constant);
-//	}
-	
 	private void Test(int length, FillArrayType type)
 	{
 		// setup:
 		var data = new int[length];
-		Utils.FillArray(data, type, type == FillArrayType.Constant ?  1 : 10);
+		Utils.FillArray(data, type);
 		
 		// when:
 		var gpuResult = gpuScan.Scan(data);

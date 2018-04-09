@@ -1,0 +1,31 @@
+﻿#include "../../ShaderUtils/Math.compute"
+
+#pragma kernel CSHistogram
+
+#define BLOCK_AMOUNT      8
+#define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
+#define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
+
+uint3           g_gridDimen;
+uint            g_size;
+uint            g_binSize;
+
+Buffer<int>     g_data;
+RWBuffer<int>   g_histo;
+
+[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
+void CSHistogram( uint3 Gid  : SV_GroupID, 
+                  uint3 DTid : SV_DispatchThreadID, 
+                  uint3 GTid : SV_GroupThreadID,
+                  uint  GI   : SV_GroupIndex )
+{
+    uint tid = to1D(GTid, BLOCK_DIMEN);
+    uint gid = to1D(Gid, g_gridDimen);
+    uint globalId = tid + gid * BLOCK_SIZE;
+    
+    if (globalId < g_size) {
+        uint id = uint(abs(g_data[globalId]) % g_binSize);
+        InterlockedAdd(g_histo[id], 1);
+    }
+}
+

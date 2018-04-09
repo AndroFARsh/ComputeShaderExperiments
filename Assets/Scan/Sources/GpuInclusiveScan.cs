@@ -7,10 +7,10 @@ public class GpuInclusiveScan: IScan
    private const string KERNEL_NAME_STORE_SUM  = "CSStoreBlockSum";
    private const string KERNEL_NAME_ADD_SUM    = "CSAddBlockSum";
 
-   private const string PARAM_GRID             = "GridDimen";
-   private const string PARAM_DATA_IN          = "In";
-   private const string PARAM_DATA_OUT         = "Out";
-   private const string PARAM_SIZE             = "Size";
+   private const string PARAM_GRID             = "g_gridDimen";
+   private const string PARAM_DATA_IN          = "g_in";
+   private const string PARAM_DATA_OUT         = "g_out";
+   private const string PARAM_SIZE             = "g_size";
 
    private readonly ComputeShader shader;
    private readonly int kernelIdScan;

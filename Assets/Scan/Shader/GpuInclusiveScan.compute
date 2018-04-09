@@ -8,13 +8,13 @@
 #define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
 #define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
 
-uint3           GridDimen;
-uint            Size;
+uint3           g_gridDimen;
+uint            g_size;
 
-Buffer<int>     In;
-RWBuffer<int>   Out;
+Buffer<int>     g_in;
+RWBuffer<int>   g_out;
 
-groupshared int sharedData[BLOCK_SIZE];
+groupshared int g_sharedData[BLOCK_SIZE];
 
 [numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
 void CSInclusiveScan( uint3 Gid  : SV_GroupID, 
@@ -23,23 +23,23 @@ void CSInclusiveScan( uint3 Gid  : SV_GroupID,
                       uint  GI   : SV_GroupIndex )
 {
     uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint gid = to1D(Gid, GridDimen);
+    uint gid = to1D(Gid, g_gridDimen);
     uint globalId = tid + gid  * BLOCK_SIZE;
-	if (globalId < Size) {
-	    sharedData[tid] = In[globalId];
+	if (globalId < g_size) {
+	    g_sharedData[tid] = g_in[globalId];
 	}
 	GroupMemoryBarrierWithGroupSync();
 	
-	for (uint s = 1; s < min(BLOCK_SIZE, Size); s <<=1) {
-	    int temp = (tid-s) >= 0 ? sharedData[tid-s] : 0;
+	for (uint s = 1; s < min(BLOCK_SIZE, g_size); s <<=1) {
+	    int temp = (tid - s) >= 0 ? g_sharedData[tid - s] : 0;
 	    GroupMemoryBarrierWithGroupSync();
 	    
-	    sharedData[tid] += temp;
+	    g_sharedData[tid] += temp;
 	    GroupMemoryBarrierWithGroupSync();
 	}
 	
-	if (globalId < Size) {
-	    Out[globalId] = sharedData[tid];
+	if (globalId < g_size) {
+	    g_out[globalId] = g_sharedData[tid];
 	}
 }
 
@@ -50,12 +50,12 @@ void CSStoreBlockSum( uint3 Gid  : SV_GroupID,
                       uint  GI   : SV_GroupIndex )
 {
     uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint gid = to1D(Gid, GridDimen);
+    uint gid = to1D(Gid, g_gridDimen);
     uint globalId = tid + gid  * BLOCK_SIZE;
     
     uint sumBlocId = globalId * BLOCK_SIZE + BLOCK_SIZE - 1;
-    if (sumBlocId < Size) {
-        Out[globalId] = In[sumBlocId];
+    if (sumBlocId < g_size) {
+        g_out[globalId] = g_in[sumBlocId];
     }
 }
 
@@ -66,14 +66,14 @@ void CSAddBlockSum( uint3 Gid  : SV_GroupID,
                     uint  GI   : SV_GroupIndex )
 {
     uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint gid = to1D(Gid, GridDimen);
+    uint gid = to1D(Gid, g_gridDimen);
     uint globalId = tid + gid  * BLOCK_SIZE - 1;
     
-    int sum = In[globalId];
+    int sum = g_in[globalId];
     for (uint i = 0; i < BLOCK_SIZE; ++i) {
         uint index = BLOCK_SIZE + globalId * BLOCK_SIZE + i;
-        if (index < Size) {
-            Out[index] += sum;
+        if (index < g_size) {
+            g_out[index] += sum;
         }
     }
 }

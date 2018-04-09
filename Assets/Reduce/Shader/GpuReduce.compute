@@ -6,12 +6,13 @@
 #define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
 #define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
 
-uint3           GridDimen;
-uint            Size;
+uint3           g_gridDimen;
+uint            g_size;
 
-RWBuffer<int>   Data;
+Buffer<int>     g_in;
+RWBuffer<int>   g_out;
 
-groupshared int sharedData[BLOCK_SIZE];
+groupshared int g_sharedData[BLOCK_SIZE];
 
 [numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
 void CSReduce( uint3 Gid  : SV_GroupID, 
@@ -20,22 +21,19 @@ void CSReduce( uint3 Gid  : SV_GroupID,
                uint  GI   : SV_GroupIndex )
 {
     uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint gid = to1D(Gid, GridDimen);
-    uint globalId = tid + gid  * BLOCK_SIZE;
-    if (globalId < Size) {
-        sharedData[tid] = Data[globalId];
-    }
+    uint gid = to1D(Gid, g_gridDimen);
+    uint globalId = tid + gid * BLOCK_SIZE;
+    if (globalId < g_size) 
+        g_sharedData[tid] = g_in[globalId];
     GroupMemoryBarrierWithGroupSync();
     
-    for (uint s = (min(BLOCK_SIZE, nextPowerOfTwo(Size)) >> 1); s > 0; s >>= 1) {
+    for (uint s = (min(BLOCK_SIZE, nextPowerOfTwo(g_size)) >> 1); s > 0; s >>= 1) {
         uint nextTid = (tid + s);
-        if (tid < s && nextTid < Size) {
-            sharedData[tid] += sharedData[nextTid];
-        }
+        if (tid < s && nextTid < g_size) 
+            g_sharedData[tid] += g_sharedData[nextTid];
+        
         GroupMemoryBarrierWithGroupSync();
     }
 
-    if (tid == 0) {
-        Data[gid] = sharedData[tid];
-    }
+    if (tid == 0) g_out[gid] = g_sharedData[0];
 }
