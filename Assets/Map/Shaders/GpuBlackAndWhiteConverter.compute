@@ -1,0 +1,12 @@
+﻿#pragma kernel CSBlackAndWhiteConverter
+
+Texture2D<float4> g_inTexture;
+RWTexture2D<float4> g_outTexture;
+
+[numthreads(8,8,1)]
+void CSBlackAndWhiteConverter (uint3 id : SV_DispatchThreadID)
+{
+    float4 value = g_inTexture[id.xy];
+    float avarage = (value.r + value.g + value.b) / 3; 
+ 	g_outTexture[id.xy] = float4(avarage, avarage, avarage, value.a);
+}

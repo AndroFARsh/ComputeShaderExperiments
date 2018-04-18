@@ -1,0 +1,31 @@
+﻿#pragma kernel CSConvert
+
+#define AREA      5
+
+Texture2D<float4> g_inTexture;
+RWTexture2D<float4> g_outTexture;
+
+uint g_width;
+uint g_height;
+
+[numthreads(8,8,1)]
+void CSConvert (uint3 id : SV_DispatchThreadID)
+{
+    int count = 1;
+    float4 value = g_inTexture[id.xy];
+    for (int i = -AREA; i <= AREA; ++i) {
+        for (int j = -AREA; j <= AREA; ++j) {
+            if ((id.x == 0 && i < 0) ||
+                (id.y == 0 && j < 0) ||
+                (id.x == g_width-1 && i > 0) ||
+                (id.y == g_height-1 && j > 0) ||
+                (i == 0 && j == 0))
+                 continue;
+        
+            value.rgb += g_inTexture[int2(id.x + i, id.y + j)].rgb;
+            count ++;
+        }    
+    }
+
+    g_outTexture[id.xy] = float4(value.rgb / count, value.a);
+}
