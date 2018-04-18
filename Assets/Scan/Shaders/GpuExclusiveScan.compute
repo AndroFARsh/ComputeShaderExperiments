@@ -4,9 +4,9 @@
 #pragma kernel CSStoreBlockSum
 #pragma kernel CSAddBlockSum
 
-#define BLOCK_AMOUNT      8
-#define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
-#define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
+#define BLOCK_AMOUNT        8
+#define BLOCK_DIMEN         uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
+#define BLOCK_SIZE          (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)
 
 uint3           g_gridDimen;
 uint            g_size;

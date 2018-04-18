@@ -1,6 +1,5 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 
@@ -103,7 +102,7 @@ namespace ShaderUtils
             var bins = new int[binsCount];
             for (var i = 0; i < data.Length; ++i)
             {
-                var index = Math.Abs(data[i] % binsCount);
+                var index = System.Math.Abs(data[i] % binsCount);
                 ++bins[index];
             }
             return bins;
