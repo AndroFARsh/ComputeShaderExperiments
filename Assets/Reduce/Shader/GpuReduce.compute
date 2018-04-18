@@ -27,7 +27,7 @@ void CSReduce( uint3 Gid  : SV_GroupID,
         g_sharedData[tid] = g_in[globalId];
     GroupMemoryBarrierWithGroupSync();
     
-    for (uint s = (min(BLOCK_SIZE, nextPowerOfTwo(g_size)) >> 1); s > 0; s >>= 1) {
+    for (uint s = (min(BLOCK_SIZE, g_size) >> 1); s > 0; s >>= 1) {
         uint nextTid = (tid + s);
         if (tid < s && nextTid < g_size) 
             g_sharedData[tid] += g_sharedData[nextTid];

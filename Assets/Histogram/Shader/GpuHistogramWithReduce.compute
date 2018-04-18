@@ -2,9 +2,8 @@
 
 #pragma kernel CSHistogram
 #pragma kernel CSReduce
-#pragma kernel CSDefragmentation
 
-#define BLOCK_AMOUNT      4
+#define BLOCK_AMOUNT      8
 #define BLOCK_DIMEN       uint3(BLOCK_AMOUNT, BLOCK_AMOUNT, BLOCK_AMOUNT)
 #define BLOCK_SIZE        (BLOCK_AMOUNT * BLOCK_AMOUNT * BLOCK_AMOUNT)  
 #define GRID_SIZE         (g_gridDimen.x * g_gridDimen.y * g_gridDimen.z) 
@@ -16,7 +15,6 @@ uint            g_offset;
 
 Buffer<int>     g_in;
 RWBuffer<int>   g_out;
-RWBuffer<int>   g_test;
 
 groupshared int g_sharedData[BLOCK_SIZE];
 groupshared int g_sharedHisto[BLOCK_SIZE];
@@ -49,43 +47,21 @@ void CSReduce( uint3 Gid  : SV_GroupID,
 {
     uint totalSize = g_offset * g_binSize;
     uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint startId = Gid.y * g_offset;
-    uint endId = (Gid.y + 1) * g_offset;
-    uint globalId = startId + tid +  Gid.x * g_binSize;
+    uint gid = to1D(Gid, g_gridDimen);
+    uint globalId = tid + gid * g_offset;
+    uint startId = to1D(uint3(0,Gid.y,0), g_gridDimen) * g_offset;
     
-    g_test[globalId] = globalId - startId;
-    g_sharedHisto[tid] = (//globalId >= startId &&  
-                          globalId < startId + g_size && 
-                          //globalId - startId < endId && 
-                          globalId < totalSize) 
+    g_sharedHisto[tid] = (globalId < startId + g_size)
         ? g_in[globalId]
         : int(0);
-    g_test[globalId] = g_sharedHisto[tid];     
     GroupMemoryBarrierWithGroupSync();
     
-    for (uint s = (min(BLOCK_SIZE, nextPowerOfTwo(g_size)) >> 1); s > 0; s >>= 1) {
+    for (uint s = (min(BLOCK_SIZE, g_size) >> 1); s > 0; s >>= 1) {
         uint nextTid = (tid + s);
         if (tid < s && nextTid < g_size) 
             g_sharedHisto[tid] += g_sharedHisto[nextTid];
         GroupMemoryBarrierWithGroupSync();
     }
     
-    if (tid == 0)
-        g_out[startId + Gid.x] = g_sharedHisto[0];
-}
-
-[numthreads(BLOCK_DIMEN.x, BLOCK_DIMEN.y, BLOCK_DIMEN.z)]
-void CSDefragmentation( uint3 Gid  : SV_GroupID, 
-               uint3 DTid : SV_DispatchThreadID, 
-               uint3 GTid : SV_GroupThreadID,
-               uint  GI   : SV_GroupIndex )
-{
-    uint tid = to1D(GTid, BLOCK_DIMEN);
-    uint gid = to1D(Gid, g_gridDimen);
-    uint toGlobalId = tid + gid  * BLOCK_SIZE;
-    uint fromGlobalId = toGlobalId * g_offset;
-    
-    if (fromGlobalId < g_size) {
-        g_out[toGlobalId] = g_in[fromGlobalId];
-    }
+   if (tid == 0) g_out[gid] = g_sharedHisto[0];
 }
