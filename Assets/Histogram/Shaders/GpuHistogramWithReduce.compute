@@ -1,4 +1,4 @@
-﻿#include "../../ShaderUtils/Math.compute"
+﻿#include "../../Shaders/Math.compute"
 
 #pragma kernel CSHistogram
 #pragma kernel CSReduce

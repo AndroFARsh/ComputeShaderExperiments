@@ -5,7 +5,7 @@ using UnityEditor;
 public class GpuExclusiveScanTest : BaseGpuScanTest {
 	protected override IScan CreateGpuScan()
 	{
-		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Scan/Shader/GpuExclusiveScan.compute");
+		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Scan/Shaders/GpuExclusiveScan.compute");
 		return new GpuExclusiveScan(shader);
 	}
 

@@ -5,7 +5,7 @@ using UnityEditor;
 public class GpuInclusiveScanTest : BaseGpuScanTest {
 	protected override IScan CreateGpuScan()
 	{
-		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Scan/Shader/GpuInclusiveScan.compute");
+		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Scan/Shaders/GpuInclusiveScan.compute");
 		return new GpuInclusiveScan(shader);
 	}
 

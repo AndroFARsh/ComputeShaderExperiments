@@ -10,7 +10,7 @@ public class GpuReducerTest {
 	[SetUp]
 	public void SetUp()
 	{
-		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Reduce/Shader/GpuReduce.compute");
+		var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Reduce/Shaders/GpuReduce.compute");
 		reducer = new GpuReduce(shader);
 	}
 	
